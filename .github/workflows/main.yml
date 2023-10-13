@@ -1,0 +1,46 @@
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+
+name: DEV Build & Deploy ALL
+
+on:
+  workflow_run:
+    workflows:
+      - 'TEST*'  # Use a pattern to match all workflows with names starting with "TEST"
+    types:
+      - completed
+
+jobs:
+  trigger-downstream-workflows:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Trigger Downstream Workflows
+        uses: actions/github-script@v5
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const triggerWorkflows = async () => {
+              const { data: workflowRuns } = await github.actions.listWorkflowRuns({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_file: 'TEST*'  # Use a pattern to match all workflows with names starting with "TEST"
+              });
+
+              for (const workflowRun of workflowRuns.workflow_runs) {
+                if (workflowRun.status === 'completed') {
+                  await github.actions.reRunWorkflow({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    run_id: workflowRun.id,
+                  });
+                }
+              }
+            };
+
+            await triggerWorkflows();
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -4,6 +4,7 @@
 name: DEV Build & Deploy ALL
 
 on:
+  workflow_dispatch:
   workflow_run:
     workflows:
       - 'TEST*'  # Use a pattern to match all workflows with names starting with "TEST"

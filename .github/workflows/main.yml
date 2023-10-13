@@ -10,14 +10,18 @@ jobs:
     steps:
     - name: Trigger TEST Workflows
       run: |
+        # Fetch the PAT (Personal Access Token) from secrets
+        PAT=${{ secrets.PAT_TOKEN }}
+        
         # List workflows in the repository
-        workflows=$(curl -s "https://api.github.com/repos/${{ github.repository }}/actions/workflows")
+        workflows=$(curl -s "https://api.github.com/repos/${{ github.repository }}/actions/workflows" \
+          -H "Authorization: Bearer $PAT")
 
         # Extract and trigger TEST workflows
         for workflow in $(echo $workflows | jq -r '.workflows[].name | select(test("TEST"))'); do
           echo "Triggering $workflow workflow..."
           curl -X POST "https://api.github.com/repos/${{ github.repository }}/actions/workflows/$(echo $workflows | jq -r --arg workflow "$workflow" '.workflows[] | select(.name == $workflow) | .id')/dispatches" \
-            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Authorization: Bearer $PAT" \
             -H "Accept: application/vnd.github.v3+json" \
             --data '{"ref": "main", "inputs": {"trigger_reason": "Manually triggered workflow"}}'
         done

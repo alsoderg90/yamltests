@@ -2,32 +2,19 @@
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
 name: DEV Build & Deploy ALL
-
 on:
-  workflow_dispatch:  # This makes the workflow manually triggerable
+  workflow_run:
+    workflows: ["TEST_2", "TEST_Workflow"]
+    types:
+      - completed
 
 jobs:
-  trigger:
+  trigger-workflow:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Trigger TEST Workflows
-        run: |
-          prefix="TEST"
-          repo="${{ github.repository }}"
-          token="${{ secrets.GITHUB_TOKEN }}"
-
-          # List all workflow files in the repository
-          workflows=$(find .github/workflows -type f -name "${prefix}_*.yml")
-
-          # Loop through the workflows and trigger them
-          for workflow in $workflows; do
-            workflow_name=$(basename $workflow .yml)
-            echo "Triggering $workflow_name"
-            curl -X POST "https://api.github.com/repos/$repo/actions/workflows/$workflow_name/dispatches" \
-              -H "Authorization: token $token" \
-              -H "Accept: application/vnd.github.v3+json" \
-              -d '{"ref": "main"}'
-          done
-        env:
-          prefix: ${{ env.TEST_PREFIX }}
-        if: startsWith(github.event.client_payload.workflow, env.prefix) || env.prefix == 'ALL'
+      - name: Trigger Workflow
+        uses: actions/trigger-workflow@v1
+        with:
+          workflow: Name of Workflow to Trigger
+          token: ${{ secrets.GITHUB_TOKEN }}

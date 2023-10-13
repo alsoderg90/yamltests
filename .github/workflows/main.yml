@@ -4,7 +4,7 @@
 name: DEV Build & Deploy ALL
 
 on:
-  workflow_dispatch: {}  # This makes the workflow manually triggerable
+  workflow_dispatch:  # This makes the workflow manually triggerable
 
 jobs:
   trigger:
@@ -16,17 +16,17 @@ jobs:
           repo="${{ github.repository }}"
           token="${{ secrets.GITHUB_TOKEN }}"
 
-          # List all workflows in the repository
-          workflows=$(curl -s "https://api.github.com/repos/$repo/actions/workflows" -H "Authorization: token $token" | jq -r '.workflows[].name')
+          # List all workflow files in the repository
+          workflows=$(find .github/workflows -type f -name "${prefix}_*.yml")
 
-          # Loop through the workflows and trigger the ones with the specified prefix
+          # Loop through the workflows and trigger them
           for workflow in $workflows; do
-            if [[ $workflow == $prefix* ]]; then
-              curl -X POST "https://api.github.com/repos/$repo/actions/workflows/$workflow/dispatches" \
-                -H "Authorization: token $token" \
-                -H "Accept: application/vnd.github.v3+json" \
-                -d '{"ref": "main"}'
-            fi
+            workflow_name=$(basename $workflow .yml)
+            echo "Triggering $workflow_name"
+            curl -X POST "https://api.github.com/repos/$repo/actions/workflows/$workflow_name/dispatches" \
+              -H "Authorization: token $token" \
+              -H "Accept: application/vnd.github.v3+json" \
+              -d '{"ref": "main"}'
           done
         env:
           prefix: ${{ env.TEST_PREFIX }}

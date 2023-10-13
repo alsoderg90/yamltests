@@ -4,44 +4,30 @@
 name: DEV Build & Deploy ALL
 
 on:
-  workflow_dispatch:
-  workflow_run:
-    workflows:
-      - 'TEST*'  # Use a pattern to match all workflows with names starting with "TEST"
-    types:
-      - completed
+  workflow_dispatch: {}  # This makes the workflow manually triggerable
 
 jobs:
-  trigger-downstream-workflows:
+  trigger:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Check out code
-        uses: actions/checkout@v2
+      - name: Trigger TEST Workflows
+        run: |
+          prefix="TEST"
+          repo="${{ github.repository }}"
+          token="${{ secrets.GITHUB_TOKEN }}"
 
-      - name: Trigger Downstream Workflows
-        uses: actions/github-script@v5
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const triggerWorkflows = async () => {
-              const { data: workflowRuns } = await github.actions.listWorkflowRuns({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                workflow_file: 'TEST*'  # Use a pattern to match all workflows with names starting with "TEST"
-              });
+          # List all workflows in the repository
+          workflows=$(curl -s "https://api.github.com/repos/$repo/actions/workflows" -H "Authorization: token $token" | jq -r '.workflows[].name')
 
-              for (const workflowRun of workflowRuns.workflow_runs) {
-                if (workflowRun.status === 'completed') {
-                  await github.actions.reRunWorkflow({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    run_id: workflowRun.id,
-                  });
-                }
-              }
-            };
-
-            await triggerWorkflows();
+          # Loop through the workflows and trigger the ones with the specified prefix
+          for workflow in $workflows; do
+            if [[ $workflow == $prefix* ]]; then
+              curl -X POST "https://api.github.com/repos/$repo/actions/workflows/$workflow/dispatches" \
+                -H "Authorization: token $token" \
+                -H "Accept: application/vnd.github.v3+json" \
+                -d '{"ref": "main"}'
+            fi
+          done
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          prefix: ${{ env.TEST_PREFIX }}
+        if: startsWith(github.event.client_payload.workflow, env.prefix) || env.prefix == 'ALL'

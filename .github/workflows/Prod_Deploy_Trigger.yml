@@ -2,7 +2,7 @@ name: Trigger Prod Deploy
 
 on:
   workflow_run:
-    workflows: [Trigger TEST Workflows]
+    workflows: [Deploy Test]
     types:
       - completed
 

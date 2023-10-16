@@ -1,4 +1,4 @@
-name: TEST_Workflow 2
+name: PROD CLIENT 
 
 on:
   workflow_run:

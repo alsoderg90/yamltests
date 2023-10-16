@@ -1,4 +1,4 @@
-name: TEST_2
+name: Trigger Prod Deploy
 
 on:
   workflow_run:

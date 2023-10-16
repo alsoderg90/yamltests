@@ -1,4 +1,4 @@
-name: Trigger TEST Workflows
+name: Deploy Test
 
 on:
   workflow_dispatch:

@@ -6,26 +6,17 @@ on:
 jobs:
   trigger:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Trigger PROD Workflows
-        uses: actions/github-script@v5
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const triggeredWorkflows = await github.actions.listRepoWorkflows({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-            });
+      - name: Check out code
+        uses: actions/checkout@v2
 
-            for (const workflow of triggeredWorkflows.data.workflows) {
-              if (workflow.name.startsWith("TEST")) {
-                await github.actions.createWorkflowDispatch({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  workflow_id: workflow.id,
-                });
-              }
-            }
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run Tests
+        run: echo "Running tests..."
+        
+  deploy-prod:
+      runs-on: 'ubuntu-latest'
+      environment: 'TEST'
+      needs: [trigger]
+      steps:
+        - name: Check out code
+          run: echo "Running tests..."

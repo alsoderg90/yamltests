@@ -1,8 +1,8 @@
-name: TEST_Workflow
+name: PROD_API
 
 on:
   workflow_run:
-    workflows: ["TEST_2"]
+    workflows: ["Deploy Test"]
     types:
       - completed
 

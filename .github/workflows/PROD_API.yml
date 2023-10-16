@@ -2,7 +2,7 @@ name: PROD_API
 
 on:
   workflow_run:
-    workflows: [Deploy Test]
+    workflows: [Trigger Prod Deploy]
     types:
       - completed
 
